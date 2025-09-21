@@ -1,7 +1,6 @@
 {
   "/page": "app/page.js",
   "/api/tracks/route": "app/api/tracks/route.js",
-  "/api/tracks/[id]/route": "app/api/tracks/[id]/route.js",
   "/tracks/[id]/page": "app/tracks/[id]/page.js",
-  "/upload/page": "app/upload/page.js"
+  "/api/tracks/[id]/route": "app/api/tracks/[id]/route.js"
 }

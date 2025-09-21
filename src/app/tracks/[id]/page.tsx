@@ -18,6 +18,7 @@ import {
 export default function TrackDetails({ params }: { params: { id: string } }) {
   const [track, setTrack] = useState<Track | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mode, setMode] = useState<'monthly' | 'cumulative'>('monthly');
 
   useEffect(() => {
     const fetchTrack = async () => {
@@ -69,6 +70,18 @@ export default function TrackDetails({ params }: { params: { id: string } }) {
       };
     });
   }, [track]);
+
+  const displayedData = useMemo(() => {
+    if (mode === 'monthly') return chartData;
+    // Build cumulative sums
+    let s = 0;
+    let r = 0;
+    return chartData.map((d) => {
+      s += d.streams;
+      r += d.revenue;
+      return { ...d, streams: s, revenue: Number(r.toFixed(2)) };
+    });
+  }, [chartData, mode]);
 
   if (loading) return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
 
@@ -147,10 +160,28 @@ export default function TrackDetails({ params }: { params: { id: string } }) {
                   </div>
 
                   <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Performance Over Time</h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Performance Over Time</h3>
+                      <div className="inline-flex rounded-md shadow-sm" role="group" aria-label="Chart mode">
+                        <button
+                          type="button"
+                          onClick={() => setMode('monthly')}
+                          className={`px-3 py-1 text-sm border dark:border-gray-600 rounded-l-md ${mode === 'monthly' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'}`}
+                        >
+                          Monthly
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMode('cumulative')}
+                          className={`px-3 py-1 text-sm border-t border-b border-r dark:border-gray-600 rounded-r-md ${mode === 'cumulative' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300'}`}
+                        >
+                          Cumulative
+                        </button>
+                      </div>
+                    </div>
                     <div className="h-64 bg-white dark:bg-gray-600 rounded border border-gray-200 dark:border-gray-600">
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartData} margin={{ top: 16, right: 24, bottom: 8, left: 8 }}>
+                        <LineChart data={displayedData} margin={{ top: 16, right: 24, bottom: 8, left: 8 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.6} />
                           <XAxis dataKey="month" stroke="#6b7280" tickMargin={8} />
                           <YAxis yAxisId="left" stroke="#6b7280" tickFormatter={(v) => v.toLocaleString()} />
