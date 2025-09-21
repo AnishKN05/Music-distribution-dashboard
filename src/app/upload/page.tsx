@@ -132,7 +132,7 @@ export default function UploadTrack() {
                 <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">File Upload (Mock)</h3>
                 <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
                   <div className="text-gray-400 text-4xl mb-2">🎵</div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">This is a mock upload form. No actual file upload is implemented.</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Upload file here.</p>
                 </div>
               </div>
 

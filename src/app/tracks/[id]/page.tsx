@@ -1,9 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 import type { Track } from '@/lib/mockData';
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from 'recharts';
 
 export default function TrackDetails({ params }: { params: { id: string } }) {
   const [track, setTrack] = useState<Track | null>(null);
@@ -25,6 +35,40 @@ export default function TrackDetails({ params }: { params: { id: string } }) {
     };
     fetchTrack();
   }, [params.id]);
+
+  // Build a mock monthly time series from release date to current month
+  const chartData = useMemo(() => {
+    if (!track) return [] as Array<{ month: string; streams: number; revenue: number }>;
+
+    const release = new Date(track.releaseDate);
+    const now = new Date();
+
+    // Generate up to 12 months including current month
+    const months: Date[] = [];
+    const cursor = new Date(release.getFullYear(), release.getMonth(), 1);
+    while (cursor <= now && months.length < 12) {
+      months.push(new Date(cursor));
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+    if (months.length === 0) months.push(new Date(now.getFullYear(), now.getMonth(), 1));
+
+    // Create a rising curve that sums to totals
+    const n = months.length;
+    const weights = Array.from({ length: n }, (_, i) => (i + 1));
+    const sumWeights = weights.reduce((a, b) => a + b, 0);
+    const monthlyStreams = weights.map((w) => (track.streams * w) / sumWeights);
+    const monthlyRevenue = weights.map((w) => (track.revenue * w) / sumWeights);
+
+    // Format data for recharts
+    return months.map((d, i) => {
+      const label = d.toLocaleString(undefined, { month: 'short', year: '2-digit' });
+      return {
+        month: label,
+        streams: Math.round(monthlyStreams[i]),
+        revenue: Number(monthlyRevenue[i].toFixed(2)),
+      };
+    });
+  }, [track]);
 
   if (loading) return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
 
@@ -104,12 +148,23 @@ export default function TrackDetails({ params }: { params: { id: string } }) {
 
                   <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Performance Over Time</h3>
-                    <div className="h-64 bg-white dark:bg-gray-600 rounded border-2 border-dashed border-gray-300 dark:border-gray-500 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="text-gray-400 text-4xl mb-2">📊</div>
-                        <p className="text-gray-500 dark:text-gray-400">Chart visualization would go here</p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Mock placeholder</p>
-                      </div>
+                    <div className="h-64 bg-white dark:bg-gray-600 rounded border border-gray-200 dark:border-gray-600">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={chartData} margin={{ top: 16, right: 24, bottom: 8, left: 8 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.6} />
+                          <XAxis dataKey="month" stroke="#6b7280" tickMargin={8} />
+                          <YAxis yAxisId="left" stroke="#6b7280" tickFormatter={(v) => v.toLocaleString()} />
+                          <YAxis yAxisId="right" orientation="right" stroke="#6b7280" tickFormatter={(v) => `$${v}`} />
+                          <Tooltip
+                            formatter={(value: any, name: string) =>
+                              name === 'Streams' ? [Number(value).toLocaleString(), name] : [`$${Number(value).toFixed(2)}`, name]
+                            }
+                          />
+                          <Legend />
+                          <Line yAxisId="left" type="monotone" dataKey="streams" name="Streams" stroke="#4f46e5" strokeWidth={2} dot={{ r: 2 }} />
+                          <Line yAxisId="right" type="monotone" dataKey="revenue" name="Revenue" stroke="#10b981" strokeWidth={2} dot={{ r: 2 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
                     </div>
                   </div>
                 </div>
