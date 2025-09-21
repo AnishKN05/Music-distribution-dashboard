@@ -1,0 +1,143 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import ThemeToggle from '@/components/ThemeToggle';
+import type { Track } from '@/lib/mockData';
+
+export default function TrackDetails({ params }: { params: { id: string } }) {
+  const [track, setTrack] = useState<Track | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTrack = async () => {
+      try {
+        const res = await fetch(`/api/tracks/${params.id}`);
+        if (!res.ok) throw new Error('Failed to fetch track');
+        const data: Track = await res.json();
+        setTrack(data);
+      } catch (e) {
+        console.error(e);
+        setTrack(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTrack();
+  }, [params.id]);
+
+  if (loading) return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+
+  if (!track)
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <header className="bg-white dark:bg-gray-800 shadow">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-6">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Track not found</h1>
+                <p className="text-gray-600 dark:text-gray-400">The requested track does not exist.</p>
+              </div>
+              <div className="flex items-center gap-4">
+                <ThemeToggle />
+                <Link href="/" className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">← Back to Dashboard</Link>
+              </div>
+            </div>
+          </div>
+        </header>
+      </div>
+    );
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 shadow">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Track Details</h1>
+              <p className="text-gray-600 dark:text-gray-400">View detailed information about this track</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <ThemeToggle />
+              <Link href="/" className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">← Back to Dashboard</Link>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+            <div className="px-6 py-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-4xl font-bold text-gray-900 dark:text-white">{track.title}</h2>
+                <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                  track.status === 'Published' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' :
+                  track.status === 'Pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100' :
+                  'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                }`}>{track.status}</span>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2">
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 mb-6">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Track Information</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Artist</p>
+                        <p className="text-lg font-medium text-gray-900 dark:text-white">{track.artist}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Genre</p>
+                        <p className="text-lg font-medium text-gray-900 dark:text-white">{track.genre}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Release Date</p>
+                        <p className="text-lg font-medium text-gray-900 dark:text-white">{new Date(track.releaseDate).toLocaleDateString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Track ID</p>
+                        <p className="text-lg font-medium text-gray-900 dark:text-white">#{track.id}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Performance Over Time</h3>
+                    <div className="h-64 bg-white dark:bg-gray-600 rounded border-2 border-dashed border-gray-300 dark:border-gray-500 flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="text-gray-400 text-4xl mb-2">📊</div>
+                        <p className="text-gray-500 dark:text-gray-400">Chart visualization would go here</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Mock placeholder</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Performance Metrics</h3>
+                    <div className="space-y-4">
+                      <div className="bg-white dark:bg-gray-600 rounded-lg p-4">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Total Streams</p>
+                        <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{track.streams.toLocaleString()}</p>
+                      </div>
+                      <div className="bg-white dark:bg-gray-600 rounded-lg p-4">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Total Revenue</p>
+                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">${track.revenue.toFixed(2)}</p>
+                      </div>
+                      <div className="bg-white dark:bg-gray-600 rounded-lg p-4">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Revenue per Stream</p>
+                        <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">${track.streams > 0 ? (track.revenue / track.streams).toFixed(4) : '0.0000'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
